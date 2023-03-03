@@ -27,7 +27,7 @@ function Box(props: ThreeElements['mesh']) {
 export default function Web() {
   return (
     <Container css={{ height: '100vh' }}>
-      <Button>主界面</Button>
+      <Button>主界面2</Button>
       <Canvas>
         <ambientLight />
         <pointLight position={[10, 10, 10]} />
