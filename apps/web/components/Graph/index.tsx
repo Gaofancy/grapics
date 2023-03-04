@@ -18,12 +18,13 @@
 
 
 import * as React from 'react'
-import { Vector3 } from 'three'
-import { withKnobs } from '@storybook/addon-knobs'
-import { Canvas, useFrame, ThreeElements } from '@react-three/fiber'
+// import { Vector3 } from 'three'
+// import { withKnobs } from '@storybook/addon-knobs'
+// import { Canvas, useFrame, ThreeElements } from '@react-three/fiber'
+import { Canvas } from '@react-three/fiber'
 import fontJSON from "three/examples/fonts/helvetiker_bold.typeface.json";
 import { Text, Text3D, Float, Center } from '@react-three/drei'
-import { Setup } from './Setup'
+// import { Setup } from './Setup'
 
 
 // export default {
