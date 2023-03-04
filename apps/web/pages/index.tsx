@@ -50,14 +50,17 @@ function Web(props: any) {
 }
 
 Web.getInitialProps = async ({ req, res, query }: NextPageContext) => {
-  const cookies = new Cookies(req, res)
+  let cookies: any;
+  if (req && res) {
+    cookies = new Cookies(req, res)
+  }
 
-  if (cookies.get('atoken')) {
+  if (cookies?.get('atoken')) {
     const info = await axios({
       url: 'https://api.github.com/user',
       method: 'GET',
       headers: {
-        Authorization: `Bearer ${cookies.get('atoken')}`,
+        Authorization: `Bearer ${cookies?.get('atoken')}`,
       },
     })
 
@@ -92,8 +95,9 @@ Web.getInitialProps = async ({ req, res, query }: NextPageContext) => {
     })
 
     const { access_token } = res.data
-    cookies.set('atoken', access_token, {
+    cookies?.set('atoken', access_token, {
       maxAge: 24 * 60 * 60 * 1000,
+      // new Date(Date.now() + 1000 * 3600 * 24)
     })
 
     const info = await axios({
