@@ -1,124 +1,83 @@
-import React, { useRef, useState } from 'react'
-import { Button, Container } from '@nextui-org/react';
-import * as THREE from 'three'
-import { Canvas, useFrame, ThreeElements } from '@react-three/fiber'
-import axios from 'axios'
-import { NextPageContext } from 'next';
 import Cookies from 'cookies'
-import 'ui/global.css'
+import { NextPageContext } from 'next'
+import { getGitHubUserInfo, getAccessToken } from '@graphics/lib'
+import Layout from '../components/Layout'
+import { Text3DSt } from '../components/Graph/index'
+import { createTheme, NextUIProvider } from "@nextui-org/react"
 
-function Box(props: ThreeElements['mesh']) {
-  const ref = useRef<THREE.Mesh>(null!)
-  const [hovered, hover] = useState(false)
-  const [clicked, click] = useState(false)
-  useFrame((state, delta) => (ref.current.rotation.x += delta))
-  return (
-    <mesh
-      {...props}
-      ref={ref}
-      scale={clicked ? 1.5 : 1}
-      onClick={(event) => click(!clicked)}
-      onPointerOver={(event) => hover(true)}
-      onPointerOut={(event) => hover(false)}>
-      <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
-    </mesh>
-  )
+interface Props {
+  login: string;
+  avatarUrl: string;
+  status: number;
 }
 
-function doLogin() {
-  const url = 'https://github.com/login/oauth/authorize?client_id=52679fe0af1963ad9f91'
-  window.location.href = url
-}
-
-function Web(props: any) {
-  const { name, id, avatar_url } = props;
+const Web = ({ login, avatarUrl, status }: Props) => {
+  const darkTheme = createTheme({
+    type: 'dark',
+    theme: {
+      colors: {},
+    }
+  })
 
   return (
-    <Container css={{ height: '100vh' }}>
-      <Button onPress={() => doLogin()}>主界面</Button>
-      <div>{name}{id}</div>
-      <img src={avatar_url} />
-      <Canvas>
-        <ambientLight />
-        <pointLight position={[10, 10, 10]} />
-        <Box position={[-1.2, 0, 0]} />
-        <Box position={[1.2, 0, 0]} />
-      </Canvas>
-    </Container>
+    <NextUIProvider theme={darkTheme}>
+      <Layout login={login} avatarUrl={avatarUrl} status={status}>
+        <Text3DSt login={login} />
+      </Layout>
+    </NextUIProvider>
+
   );
 }
 
 Web.getInitialProps = async ({ req, res, query }: NextPageContext) => {
+  const getGitHubUser = async (token: string) => {
+    try {
+      const info = await getGitHubUserInfo(token)
+
+      const { login, id, avatar_url: avatarUrl } = info?.data || {};
+      return {
+        login,
+        avatarUrl,
+        status: 200,
+      };
+    } catch (error) {
+      console.error(error)
+      return {
+        status: 500,
+      }
+    }
+  }
+
   let cookies: any;
   if (req && res) {
     cookies = new Cookies(req, res)
   }
 
-  if (cookies?.get('atoken')) {
-    const info = await axios({
-      url: 'https://api.github.com/user',
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${cookies?.get('atoken')}`,
-      },
-    })
-
-    return {
-      name: info.data.login,
-      id: info.data.id,
-      avatar_url: info.data.avatar_url
-    };
+  const token = cookies?.get('atoken');
+  if (token) {
+    return await getGitHubUser(token)
   }
 
-  const { code } = query
+  const { code } = query;
 
-  if (!code) {
-    return {
-      info: 'no code'
+  if (typeof code === 'string') {
+    try {
+      const accRes = await getAccessToken(code)
+      const { access_token } = accRes?.data
+      cookies?.set('atoken', access_token, {
+        expires: new Date(Date.now() + 1000 * 3600 * 24),
+      })
+
+      return await getGitHubUser(access_token)
+    } catch (error) {
+      return {
+        status: 500,
+      }
     }
-  }
-  const data = {
-    code,
-    client_id: '52679fe0af1963ad9f91',
-    client_secret: '87459e19bf23e5fc870f63de49fbf56a9c67e690',
-  }
-
-  try {
-    const res = await axios({
-      url: 'https://github.com/login/oauth/access_token',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-      },
-      data,
-    })
-
-    const { access_token } = res.data
-    cookies?.set('atoken', access_token, {
-      maxAge: 24 * 60 * 60 * 1000,
-      // new Date(Date.now() + 1000 * 3600 * 24)
-    })
-
-    const info = await axios({
-      url: 'https://api.github.com/user',
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${access_token}`,
-      },
-    })
-
-    return {
-      name: info.data.login,
-      id: info.data.id,
-      avatar_url: info.data.avatar_url
-    }
-  } catch (error) {
-    console.error(error);
   }
 
   return {
-    name: '500'
+    status: 500,
   }
 }
 
