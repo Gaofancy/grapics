@@ -30,7 +30,7 @@ const AvatarInfo = (login: string, avatarUrl: string) => {
 const Nav = ({ login, avatarUrl, status }: NavRes) => {
   return (
     <>
-      <Navbar isBordered variant="static">
+      <Navbar variant="static">
         <Navbar.Brand>
           <Text b color="inherit" hideIn="xs">
             Graphics Interview

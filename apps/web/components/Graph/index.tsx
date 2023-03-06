@@ -1,56 +1,56 @@
-// import React, { useRef, useState, useMemo, useLayoutEffect } from 'react'
-// import { Canvas, useFrame, ThreeElements } from '@react-three/fiber'
-// import {DoubleSide, Vector3} from 'three'
-// import { Text3D } from '@react-three/drei'
-// import fontJSON from "three/examples/fonts/helvetiker_bold.typeface.json";
-
-// const Graph = ({ login }: any) => {
-//   return (
-//     <>
-//       <Canvas style={{height: '80vh'}}>
-//         123
-//       </Canvas>
-//     </>
-//   )
-// }
-
-// export default Graph
-
-
-import * as React from 'react'
-// import { Vector3 } from 'three'
-// import { withKnobs } from '@storybook/addon-knobs'
-// import { Canvas, useFrame, ThreeElements } from '@react-three/fiber'
-import { Canvas } from '@react-three/fiber'
+import React, { useState } from 'react'
+import { Canvas, Vector3, Euler, ThreeEvent } from '@react-three/fiber'
 import fontJSON from "three/examples/fonts/helvetiker_bold.typeface.json";
-import { Text, Text3D, Float, Center } from '@react-three/drei'
-// import { Setup } from './Setup'
+import { Text3D, Center } from '@react-three/drei'
 
+interface IText3D {
+  login: string;
+  scale: number;
+  position: Vector3 | any;
+  rotation: Euler;
+  color: string;
+  record: (name: string, value: any) => void;
+  setPositionX: (x: string) => void;
+}
 
-// export default {
-//   title: 'Abstractions/Text3D',
-//   component: Text,
-//   decorators: [withKnobs, (storyFn: () => any) => <Setup cameraPosition={new Vector3(0, 0, 5)}>{storyFn()}</Setup>],
-// }
+export const Text3DSt = ({ login, scale, position, rotation, color, record, setPositionX }: IText3D) => {
+  const rate = 120;
+  const [enabled, setEnabled] = useState<boolean>(false)
+  const [x, setX] = useState<number>(0)
+  const [d, setD] = useState<number>(0)
+  const onPointerMove = (e: ThreeEvent<PointerEvent>) => {
+    if (!enabled) return
+    const formatX = `${((e.pageX + d - x) / rate).toFixed(2)}`
+    setPositionX(formatX)
+  }
 
-function Text3DScene({ login }: any) {
+  const onMouseDown = (e: React.MouseEvent<HTMLElement>) => {
+    setEnabled(true)
+    setX(e.pageX)
+    setD(position[0] * rate)
+  }
+
   return (
-    <React.Suspense fallback={null}>
-      <Center>
-        <Float floatIntensity={5} speed={2}>
-          <Text3D font={fontJSON as any} bevelEnabled bevelSize={0.05}>
-            {login || 'Text 3D'}
-            <meshNormalMaterial />
-          </Text3D>
-        </Float>
-      </Center>
-    </React.Suspense>
+    <Canvas style={{ height: '88vh' }} onMouseDown={(e: React.MouseEvent<HTMLElement>) => onMouseDown(e)} onMouseUp={() => {setEnabled(false); record('positionX', position[0])}}>
+      <ambientLight intensity={0.3} />
+      <mesh onPointerMove={(e: ThreeEvent<PointerEvent>) => onPointerMove(e)}>
+        <color attach="background" args={['#000']} />
+        <React.Suspense fallback={null}>
+          <Center position={position}>
+            <directionalLight position={[0, 2, 2]} />
+            <Text3D
+              font={fontJSON as any}
+              bevelEnabled
+              bevelSize={0.05}
+              rotation={rotation}
+              scale={[scale, scale, scale]}>
+              {login || 'Text 3D'}
+              <meshStandardMaterial color={color} />
+            </Text3D>
+          </Center>
+        </React.Suspense>
+      </mesh>
+    </Canvas>
   )
 }
 
-export const Text3DSt = ({ login }: any) => (
-  <Canvas style={{ height: '80vh' }}>
-    <Text3DScene login={login} />
-  </Canvas>
-)
-Text3DSt.storyName = 'Default'

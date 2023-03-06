@@ -1,4 +1,4 @@
-import { useSSR, Container } from '@nextui-org/react';
+import { useSSR } from '@nextui-org/react';
 import Header from './Head'
 import Nav from './Nav';
 import 'ui/global.css'
@@ -17,9 +17,7 @@ const Layout = ({ children, login, avatarUrl, status }: LayoutProps) => {
     <>
       <Header />
       <Nav login={login} avatarUrl={avatarUrl} status={status} />
-      <Container css={{ height: 'calc(100vh - 76px)' }}>
-        <main>{children}</main>
-      </Container>
+      <main>{children}</main>
     </>
   ) : <></>
 }
